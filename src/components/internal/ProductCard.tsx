@@ -3,6 +3,7 @@ interface ProductCardProps {
   tittle: string;
   price: number;
   stock: number;
+  test: string;
 }
 
 export const ProductCard = ({
