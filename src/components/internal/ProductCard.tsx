@@ -6,6 +6,8 @@ interface ProductCardProps {
   test: string;
 }
 
+tahap pertama
+
 export const ProductCard = ({
   imageUrl = "https://i.pinimg.com/736x/90/ff/78/90ff78c5ed21a770ec1ba1d4eb722b27.jpg",
   tittle = "Dark blue t-shirt",
