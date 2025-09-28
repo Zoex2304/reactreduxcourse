@@ -21,6 +21,7 @@ export const ProductCard = ({
   stock = 10,
 }: ProductCardProps) => {
   const [quantity, setQuantity] = useState(0);
+  const [isAdded, setIsAdded] = useState(false);
 
   const increaseQuantity = () => {
     setQuantity((prevVal) => Math.min(prevVal + 1, stock));
@@ -48,7 +49,7 @@ export const ProductCard = ({
     if (quantity === 0) {
       setQuantity(1);
     }
-
+    setIsAdded(true);
     alert(
       `${
         quantity === 0 ? quantity + 1 : quantity
@@ -120,7 +121,7 @@ export const ProductCard = ({
             disabled={stock === 0}
             onClick={addToCart}
           >
-            {stock > 0 ? "Add to cart" : "Out of Stock"}
+            {stock === 0 ? "Out of Stock" : isAdded ? "Added" : "Add to cart"}
           </Button>
         </div>
       </div>
