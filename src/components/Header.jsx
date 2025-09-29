@@ -1,13 +1,18 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { IoMenu, IoClose, IoHeart, IoCart, IoSearch } from "react-icons/io5";
 import { Button } from "./ui/button.jsx";
 import { Input } from "./ui/input.jsx";
 import { Separator } from "@radix-ui/react-separator";
+import { Link, useLocation } from "react-router-dom";
 
 /**
  * @typedef {'menu' | 'search' | null} PanelState
  */
 const useHeaderState = () => {
+  const location = useLocation();
+
+  useEffect(() => closePanels(), [location]);
+
   /** @type {[PanelState, React.Dispatch<React.SetStateAction>]} */
   const [activePanel, setActivePanel] = useState(null);
   const tooglePanel = (panel) => {
@@ -80,9 +85,11 @@ export const Header = () => {
       <header className="relative border">
         <nav className="w-full relative z-50 flex justify-between px-4 md:px-8 items-center h-16 bg-white">
           {/* logo */}
-          <p className="text-xl md:text-2xl font-bold hover:cursor-pointer flex-shrink-0">
-            NovoGuard
-          </p>
+          <Link to="/">
+            <p className="text-xl md:text-2xl font-bold hover:cursor-pointer flex-shrink-0">
+              NovoGuard
+            </p>
+          </Link>
           {/* desktop searchbar */}
           <SearchBar className="w-full max-w-[600px] mx-8 hidden md:flex" />
 
@@ -90,9 +97,11 @@ export const Header = () => {
           <div className="hidden md:flex items-center justify-between gap-6 ">
             {/* cart and wishLisht icon */}
             <div className="flex justify-between items-center gap-3">
-              <Button variant="ghost" size="icon">
-                <IoCart className="size-6" />
-              </Button>
+              <Link to="/cart">
+                <Button variant="ghost" size="icon">
+                  <IoCart className="size-6" />
+                </Button>
+              </Link>
               <Button variant="ghost" size="icon">
                 <IoHeart className="size-6" />
               </Button>
@@ -163,10 +172,12 @@ export const Header = () => {
           <div className="space-y-6">
             {/* icon */}
             <div className="space-y-3">
-              <Button variant="ghost" className="w-full h-12 justify-start">
-                <IoCart className="size-5 mr-3 text-gray-600" />
-                <span>Cart</span>
-              </Button>
+              <Link to="/cart">
+                <Button variant="ghost" className="w-full h-12 justify-start">
+                  <IoCart className="size-5 mr-3 text-gray-600" />
+                  <span>Cart</span>
+                </Button>
+              </Link>
               <Button variant="ghost" className="w-full h-12 justify-start">
                 <IoHeart className="size-5 mr-3 text-gray-600" />
                 <span>Wishlist</span>
