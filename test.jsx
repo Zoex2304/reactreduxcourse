@@ -1,179 +1,254 @@
-  // src/components/Header.jsx
+import React, { useCallback, memo, FC } from "react";
+import { Mail, Lock } from "lucide-react";
+import { FaGoogle, FaGithub } from "react-icons/fa";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  useForm,
+  Controller,
+  FieldValues,
+  ControllerRenderProps,
+  ControllerFieldState,
+} from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
+import { Button } from "../components/ui/button";
+import { Link } from "react-router-dom";
+import { FloatingInputLabel } from '../components/internal/FloatingInputLabel.js';
 
-  import { useState, useEffect } from "react";
-  import { Button } from "./ui/button.jsx";
-  import { Input } from "./ui/input.jsx";
-  import { IoCart, IoHeart, IoSearch, IoMenu, IoClose } from "react-icons/io5";
-  import { Separator } from "./ui/separator.jsx";
+const globalStyle = `
+  input[type="password"]::-ms-reveal,
+  input[type="password"]::-webkit-password-reveal-button {
+    display: none;
+  }
+`;
 
-  /**
-   * @typedef {'menu' | 'search' | null} PanelState
-   */
+const loginSchema = z.object({
+  email: z.string().email({ message: "Please enter a valid email address" }),
+  password: z
+    .string()
+    .min(8, "Minimum 8 characters")
+    .regex(/[a-z]/, "Must contain at least one lowercase letter")
+    .regex(/[A-Z]/, "Must contain at least one uppercase letter")
+    .regex(/\d/, "Must contain at least one number")
+    .regex(/[^a-zA-Z0-9]/, "Must contain at least one special character"),
+});
 
-  // Custom Hook: Encapsulates all state management logic for the header.
-  const useHeaderState = () => {
-    /** @type {[PanelState, React.Dispatch<React.SetStateAction<PanelState>>]} */
-    const [activePanel, setActivePanel] = useState(null);
+type LoginFormInputs = z.infer<typeof loginSchema>;
 
-    // Toggle function that handles opening, closing, and switching panels.
-    const togglePanel = (panel) => {
-      setActivePanel((current) => (current === panel ? null : panel));
-    };
-    
-    const closePanels = () => {
-      setActivePanel(null);
-    };
+interface LoginActionButtonProps {
+  isLoading: boolean;
+  isDisabled: boolean;
+}
 
-    // Effect to close panels on 'Escape' key press.
-    useEffect(() => {
-      const handleEscape = (e) => {
-        if (e.key === 'Escape') {
-          closePanels();
-        }
-      };
-      document.addEventListener('keydown', handleEscape);
-      return () => document.removeEventListener('keydown', handleEscape);
-    }, []);
+const FieldErrors = memo(({ message }: { message?: string }) => (
+  <AnimatePresence mode="wait">
+    {message && (
+      <motion.p
+        key={message}
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 10 }}
+        transition={{ duration: 0.2 }}
+        className="text-rose-500 text-xs px-1 pt-1"
+      >
+        {message}
+      </motion.p>
+    )}
+  </AnimatePresence>
+));
 
-    return { 
-      activePanel, 
-      togglePanel, 
-      closePanels 
-    };
-  };
-
-  // Reusable UI sub-components
-  const SearchBar = ({ className = "", autoFocus = false }) => (
-    <div className={`relative flex items-center ${className}`}>
-      <IoSearch className="absolute left-3 size-5 text-gray-400 z-10" />
-      <Input 
-        placeholder="Search products..." 
-        className="pl-10" 
-        autoFocus={autoFocus}
-      />
-    </div>
-  );
-
-  const AnimatedMenuIcon = ({ isOpen }) => (
-    <div className="relative w-5 h-5 flex items-center justify-center">
-      <IoMenu className={`size-5 absolute transition-all duration-300 ${isOpen ? 'rotate-90 opacity-0' : 'rotate-0 opacity-100'}`} />
-      <IoClose className={`size-5 absolute transition-all duration-300 ${isOpen ? 'rotate-0 opacity-100' : '-rotate-90 opacity-0'}`} />
-    </div>
-  );
-
-  // Abstracted component for the mobile dropdown panels to reduce JSX repetition.
-  const MobilePanel = ({ isOpen, children }) => (
-    <div className={`absolute top-full left-0 right-0 bg-white border-b border-gray-200 shadow-lg z-50 md:hidden
-      transition-all duration-300 ease-out origin-top ${
-        isOpen 
-          ? 'transform scale-y-100 opacity-100' 
-          : 'transform scale-y-0 opacity-0 pointer-events-none'
-      }`}>
-      <div className={`px-4 py-6 transition-all duration-300 delay-100 ${
-          isOpen ? 'translate-y-0 opacity-100' : '-translate-y-2 opacity-0'
-        }`}>
-        {children}
+const LoginActionButton: React.FC<LoginActionButtonProps> = memo(
+  ({ isLoading, isDisabled }) => (
+    <div className="space-y-4">
+      <div className="text-right">
+        <Link
+          to=""
+          className="text-xs sm:text-sm font-medium text-primary hover:underline"
+        >
+          Forgot password
+        </Link>
       </div>
+      <Button
+        type="submit"
+        className="w-full h-11 sm:h-12 text-sm sm:text-base font-medium"
+        disabled={isLoading || isDisabled}
+      >
+        {isLoading ? "Processing..." : "Sign in"}
+      </Button>
     </div>
-  );
+  )
+);
 
-  // Main Header Component
-  export const Header = () => {
-    const { activePanel, togglePanel, closePanels } = useHeaderState();
+const LoginForm: React.FC = () => {
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isValid, isSubmitting },
+  } = useForm<LoginFormInputs>({
+    resolver: zodResolver(loginSchema),
+    mode: "onChange",
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
 
-    const isPanelOpen = activePanel !== null;
-    const isMenuOpen = activePanel === 'menu';
-    const isSearchOpen = activePanel === 'search';
-
-    return (
-      <>
-        <header className="relative z-50">
-          <nav className="w-full justify-between px-4 md:px-8 flex items-center border-b border-gray-200 h-16 font-semibold bg-white">
-            {/* Logo */}
-            <p className="text-xl md:text-2xl hover:cursor-pointer font-bold flex-shrink-0">
-              Novoguard
-            </p>
-
-            {/* Desktop Search Bar */}
-            <SearchBar className="hidden md:flex max-w-[600px] w-full mx-8" />
-
-            {/* Desktop Icons */}
-            <div className="hidden md:flex items-center gap-4">
-              <Button variant="ghost" size="icon" className="h-10 w-10">
-                <IoCart className="size-5" />
-              </Button>
-              <Button variant="ghost" size="icon" className="h-10 w-10">
-                <IoHeart className="size-5" />
-              </Button>
-              <Separator orientation="vertical" className="h-6" />
-              <Button>Log in</Button>
-              <Button variant="outline">Sign up</Button>
-            </div>
-
-            {/* Mobile Icons */}
-            <div className="flex md:hidden items-center gap-1">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className={`h-10 w-10 transition-colors ${isSearchOpen ? 'bg-gray-100' : ''}`}
-                onClick={() => togglePanel('search')}
-              >
-                <IoSearch className={`size-5 transition-transform ${isSearchOpen ? 'scale-110' : ''}`} />
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className={`h-10 w-10 transition-colors ${isMenuOpen ? 'bg-gray-100' : ''}`}
-                onClick={() => togglePanel('menu')}
-              >
-                <AnimatedMenuIcon isOpen={isMenuOpen} />
-              </Button>
-            </div>
-          </nav>
-
-          {/* Backdrop - appears when any panel is open */}
-          {isPanelOpen && (
-            <div 
-              className="fixed top-16 left-0 right-0 bottom-0 bg-black/20 backdrop-blur-sm z-40 md:hidden transition-opacity duration-300"
-              onClick={closePanels}
-            />
-          )}
-
-          {/* Mobile Search Panel */}
-          <MobilePanel isOpen={isSearchOpen}>
-            <SearchBar autoFocus />
-            <Button 
-              variant="ghost" 
-              className="w-full mt-4 justify-center py-3 text-gray-600"
-              onClick={closePanels}
-            >
-              Cancel
-            </Button>
-          </MobilePanel>
-          
-          {/* Mobile Menu Panel */}
-          <MobilePanel isOpen={isMenuOpen}>
-            <div className="space-y-6">
-              <div className="space-y-3">
-                <Button variant="ghost" className="w-full justify-start h-12">
-                  <IoCart className="size-5 mr-4 text-gray-600" />
-                  <span>Cart</span>
-                </Button>
-                <Button variant="ghost" className="w-full justify-start h-12">
-                  <IoHeart className="size-5 mr-4 text-gray-600" />
-                  <span>Wishlist</span>
-                </Button>
-              </div>
-              
-              <div className="border-t border-gray-100 pt-6">
-                <div className="space-y-3">
-                  <Button className="w-full justify-center h-12">Log in</Button>
-                  <Button variant="outline" className="w-full justify-center h-12">Sign up</Button>
-                </div>
-              </div>
-            </div>
-          </MobilePanel>
-        </header>
-      </>
-    );
+  const onSubmit = (data: LoginFormInputs) => {
+    console.log("Form submitted:", data);
+    return new Promise((resolve) => setTimeout(resolve, 1500));
   };
+
+  type ValidationState = "valid" | "invalid" | "default";
+
+  const useValidationState = <TValidationState extends FieldValues>(
+    field: ControllerRenderProps<TValidationState>,
+    fieldState: ControllerFieldState
+  ): ValidationState => {
+    const { error, isTouched } = fieldState;
+    const hasVal = field.value || field.value.length > 0;
+
+    const validationState =
+      !isTouched || !hasVal ? "default" : error ? "invalid" : "valid";
+
+    return validationState;
+  };
+
+  return (
+    <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
+      <div className="space-y-4">
+        <Controller
+          name="email"
+          control={control}
+          render={({ field, fieldState}) => {
+            const validationState = useValidationState(field,fieldState);
+            return (
+              <div>
+                <FloatingInputLabel
+                  id="email"
+                  label="Email"
+                  leading={Mail}
+                  type="email"
+                  validationState={validationState}
+                  {...field}
+                />
+                <AnimatePresence>
+                  {fieldState.error && (
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="text-rose-500 text-xs px-1 pt-1"
+                    >
+                      {fieldState.error.message}
+                    </motion.p>
+                  )}
+                </AnimatePresence>
+              </div>
+            );
+          }}
+        />
+        <Controller
+          name="password"
+          control={control}
+          render={({ field, fieldState }) => {
+            const validationState = useValidationState(field, fieldState )
+            return (
+              <div>
+                <FloatingInputLabel
+                  id="password"
+                  label="Password"
+                  leading={Lock}
+                  type="password"
+                  showPasswordToggle={field.value.length > 0}
+                  validationState={validationState}
+                  {...field}
+                />
+                <FieldErrors message={fieldState.error?.message} />
+              </div>
+            );
+          }}
+        />
+      </div>
+      <LoginActionButton isDisabled={!isValid} isLoading={isSubmitting} />
+    </form>
+  );
+};
+
+// --- Main Page ---
+const LoginPage: React.FC = () => {
+  const handleSocialLogin = useCallback((provider: "google" | "github") => {
+    console.log(`sign in with ${provider}`);
+  }, []);
+
+  return (
+    <>
+      <style>{globalStyle}</style>
+      <Card className="w-full max-w-[95%] sm:max-w-md md:max-w-lg shadow-lg">
+        <CardHeader className="space-y-2 text-center px-4 sm:px-6 md:px-8 pt-6 sm:pt-8">
+          <CardTitle className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight">
+            Welcome Back!
+          </CardTitle>
+          <CardDescription className="text-sm sm:text-base md:text-lg">
+            Sign in to continue to your account
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent className="space-y-6 px-4 sm:px-6 md:px-8 pb-6">
+          <LoginForm />
+
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t"></div>
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">
+                Or continue with
+              </span>
+            </div>
+          </div>
+
+          <div className="grid gap-3">
+            <Button
+              className="w-full h-11 sm:h-12 text-sm sm:text-base"
+              variant="outline"
+              onClick={() => handleSocialLogin("google")}
+            >
+              <FaGoogle className="size-4 sm:size-5 mr-2" />
+              <span className="hidden xs:inline sm:inline">Sign in with </span>
+              Google
+            </Button>
+            <Button
+              className="w-full h-11 sm:h-12 text-sm sm:text-base"
+              variant="outline"
+              onClick={() => handleSocialLogin("github")}
+            >
+              <FaGithub className="size-4 sm:size-5 mr-2" />
+              <span className="hidden xs:inline sm:inline">Sign in with </span>
+              Github
+            </Button>
+          </div>
+        </CardContent>
+
+        <CardFooter className="px-4 sm:px-6 md:px-8 pb-6">
+          <p className="w-full text-center text-xs sm:text-sm text-muted-foreground">
+            Don't have an account?{" "}
+            <Link to="" className="font-medium text-primary hover:underline">
+              Sign Up
+            </Link>
+          </p>
+        </CardFooter>
+      </Card>
+    </>
+  );
+};
+
+export default LoginPage;

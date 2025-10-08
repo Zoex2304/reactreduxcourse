@@ -113,7 +113,9 @@ export const Header = () => {
             />
             {/* auth button */}
             <div className="flex items-center gap-3">
-              <Button>Log In</Button>
+              <Link to="/login">
+                <Button>Log In</Button>
+              </Link>
               <Button variant="ghost">Sign In</Button>
             </div>
           </div>
@@ -187,7 +189,11 @@ export const Header = () => {
             {/* auth */}
             <div className="border-t border-gray-100 pt-6">
               <div className="space-y-3">
-                <Button className="w-full justify-center h-12 ">Log In</Button>
+                <Link to="/login">
+                  <Button className="w-full justify-center h-12 ">
+                    Log In
+                  </Button>
+                </Link>
                 <Button
                   variant="outline"
                   className="w-full justify-center h-12"
